@@ -250,6 +250,22 @@ class Routes {
     }
     return await Messaging.deleteMessage(username[0], message._id)
   }
+
+  // TODO in Beta: Discussing Concept  
+  @Router.get("/discussion/")
+  async getDiscussion(session: SessionDoc){
+    throw new Error("TODO, not implemented");
+  }
+
+  @Router.get("/discussion/comment")
+  async comment(session: SessionDoc){
+    throw new Error("TODO, not implemented");
+  }
+
+  @Router.get("/discussion/delete")
+  async delete(session: SessionDoc, timestamp: string){
+    throw new Error("TODO, not implemented");
+  }
 }
 
 /** The web app. */
