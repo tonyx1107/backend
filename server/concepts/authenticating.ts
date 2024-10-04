@@ -5,6 +5,7 @@ import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
 export interface UserDoc extends BaseDoc {
   username: string;
   password: string;
+  isAdmin: Boolean;
 }
 
 /**
@@ -23,9 +24,13 @@ export default class AuthenticatingConcept {
     void this.users.collection.createIndex({ username: 1 });
   }
 
-  async create(username: string, password: string) {
+  async create(username: string, password: string, adminKey?: string) {
     await this.assertGoodCredentials(username, password);
-    const _id = await this.users.createOne({ username, password });
+    let admin: Boolean = false;
+    if (adminKey == "secret") {
+      admin = true; 
+    }
+    const _id = await this.users.createOne({ username, password, isAdmin: admin});
     return { msg: "User created successfully!", user: await this.users.readOne({ _id }) };
   }
 
@@ -74,6 +79,14 @@ export default class AuthenticatingConcept {
     return { msg: "Successfully authenticated.", _id: user._id };
   }
 
+  async isAdmin(_id: ObjectId) {
+    const user = await this.users.readOne({ _id });
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+    return user.isAdmin; 
+  }
+
   async updateUsername(_id: ObjectId, username: string) {
     await this.assertUsernameUnique(username);
     await this.users.partialUpdateOne({ _id }, { username });
@@ -117,4 +130,6 @@ export default class AuthenticatingConcept {
       throw new NotAllowedError(`User with username ${username} already exists!`);
     }
   }
+
+
 }
