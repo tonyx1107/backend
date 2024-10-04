@@ -8,6 +8,7 @@ import { SessionDoc } from "./concepts/sessioning";
 import Responses from "./responses";
 
 import { z } from "zod";
+import { Session } from "express-session";
 
 /**
  * Web server routes for the app. Implements synchronizations between concepts.
@@ -33,9 +34,9 @@ class Routes {
   }
 
   @Router.post("/users")
-  async createUser(session: SessionDoc, username: string, password: string) {
+  async createUser(session: SessionDoc, username: string, password: string, key?: string) {
     Sessioning.isLoggedOut(session);
-    return await Authing.create(username, password);
+    return await Authing.create(username, password, key);
   }
 
   @Router.patch("/users/username")
@@ -163,18 +164,19 @@ class Routes {
   @Router.post("/verification/request")
   async createVerificationRequest(session: SessionDoc, credentials: string) {
     const user = Sessioning.getUser(session);
+    const username = await Authing.idsToUsernames([user]);
+
     if (!credentials) {
       return { error: "Missing credentials." };
     }
 
-    const verificationRequest = await Verifying.createVerificationRequest(user, credentials);
+    const verificationRequest = await Verifying.createVerificationRequest(username[0], credentials);
     return verificationRequest;
   }
 
   @Router.get("/verification/status")
-  async getVerificationStatus(session: SessionDoc) {
-    const user = Sessioning.getUser(session);
-    const request = await Verifying.getRequestByUserId(user);
+  async getVerificationStatus(session: SessionDoc, username: string) {
+    const request = await Verifying.getRequestByUser(username);
     if (!request) {
       return { status: "No verification request found." };
     }
@@ -182,30 +184,36 @@ class Routes {
     return { status: request.status };
   }
 
-  @Router.post("/verification/approve/:id")
+  @Router.get("/verification/view")
+  async viewRequests(session: SessionDoc) {
+    const user = Sessioning.getUser(session);
+    const username = await Authing.idsToUsernames([user]);
+    return await Verifying.getRequestByUser(username[0])
+  }
+  
+
+  @Router.post("/verification/approve/:requester")
   async approveVerificationRequest(session: SessionDoc, requester: string) {
-    const requestUser = (await Authing.getUserByUsername(requester))._id;
-    const verificationRequest = await Verifying.getRequestById(requestUser)
+    const verificationRequest = await Verifying.getRequestByUser(requester)
     const user = Sessioning.getUser(session);
     const adminStatus = await Authing.isAdmin(user);
     if (!adminStatus) {
       return { error: "You do not have permission to approve requests." };
     }
-    const result = await Verifying.approveRequest(requestUser);
+    const result = await Verifying.approveRequest(requester);
     return result;
   }
 
-  @Router.post("/verification/reject/:id")
+  @Router.post("/verification/reject/:requester")
   async rejectVerificationRequest(session: SessionDoc, requester: string) {
-    const requestUser = (await Authing.getUserByUsername(requester))._id;
-    const verificationRequest = await Verifying.getRequestById(requestUser)
+    const verificationRequest = await Verifying.getRequestByUser(requester)
     const user = Sessioning.getUser(session);
     const adminStatus = await Authing.isAdmin(user);
     if (!adminStatus) {
       return { error: "You do not have permission to reject requests." };
     }
 
-    const result = await Verifying.rejectRequest(requestUser);
+    const result = await Verifying.rejectRequest(requester);
     return result;
   }
 }

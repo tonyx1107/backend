@@ -24,7 +24,7 @@ const operations: Operation[] = [
     name: "Create User",
     endpoint: "/api/users",
     method: "POST",
-    fields: { username: "input", password: "input" },
+    fields: { username: "input", password: "input", key: "input"},
   },
   {
     name: "Login",
@@ -79,6 +79,36 @@ const operations: Operation[] = [
     endpoint: "/api/posts/:id",
     method: "DELETE",
     fields: { id: "input" },
+  },
+  {
+    name: "Request Verification",
+    endpoint: "/api/verification/request",
+    method: "POST",
+    fields: { credentials: "input" },
+  },
+  {
+    name: "Get Verification Status",
+    endpoint: "/api/verification/status",
+    method: "GET",
+    fields: {username: "input"},
+  },
+  {
+    name: "Approve Verification",
+    endpoint: "/api/verification/approve/:requester",
+    method: "POST",
+    fields: { requester: "input"},
+  },
+  {
+    name: "Reject Verification",
+    endpoint: "/api/verification/reject/:requester",
+    method: "POST",
+    fields: { requester: "input"},
+  },
+  {
+    name: "View Verification Request",
+    endpoint: "/api/verification/view",
+    method: "GET",
+    fields: {},
   },
   //
   // ...
