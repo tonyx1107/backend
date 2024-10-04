@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 
 import { Router, getExpressRouter } from "./framework/router";
 
-import { Authing, Friending, Posting, Sessioning, Verifying } from "./app";
+import { Authing, Friending, Posting, Sessioning, Verifying, Messaging } from "./app";
 import { PostOptions } from "./concepts/posting";
 import { SessionDoc } from "./concepts/sessioning";
 import Responses from "./responses";
@@ -161,6 +161,7 @@ class Routes {
     return await Friending.rejectRequest(fromOid, user);
   }
 
+  // Verifying 
   @Router.post("/verification/request")
   async createVerificationRequest(session: SessionDoc, credentials: string) {
     const user = Sessioning.getUser(session);
@@ -215,6 +216,39 @@ class Routes {
 
     const result = await Verifying.rejectRequest(requester);
     return result;
+  }
+
+  // Messaging 
+  @Router.get("/messages/")
+  async viewMessages(session: SessionDoc) {
+    const user = Sessioning.getUser(session);
+    const username = await Authing.idsToUsernames([user]);
+    return await Messaging.getMessagesForUser(username[0]);
+  }
+
+  @Router.get("/messages/:friend")
+  async viewMessagesWith(session: SessionDoc, friend: string) {
+    const user = Sessioning.getUser(session);
+    const username = await Authing.idsToUsernames([user]);
+    return await Messaging.getMessagesBetweenUsers(username[0], friend);
+  }
+
+  @Router.post("/messages/send")
+  async sendMessage(session: SessionDoc, recipient: string, content: string) {
+    const user = Sessioning.getUser(session);
+    const username = await Authing.idsToUsernames([user]);
+    return await Messaging.sendMessage(username[0], recipient, content);
+  }
+
+  @Router.delete("/messages/delete")
+  async deleteMessage(session: SessionDoc, recipient: string, time: string) {
+    const user = Sessioning.getUser(session);
+    const username = await Authing.idsToUsernames([user]);
+    const message = await Messaging.messages.readOne({ sender: username[0], recipient, timestamp: new Date(time) });
+    if (!message) {
+      return { error: "No such message." };
+    }
+    return await Messaging.deleteMessage(username[0], message._id)
   }
 }
 

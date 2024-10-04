@@ -110,6 +110,30 @@ const operations: Operation[] = [
     method: "GET",
     fields: {},
   },
+  {
+    name: "View All Messages",
+    endpoint: "/api/messages",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "View Chat",
+    endpoint: "/api/messages/:friend",
+    method: "GET",
+    fields: {friend: "input"},
+  },
+  {
+    name: "Send Message",
+    endpoint: "/api/messages/send",
+    method: "POST",
+    fields: {recipient: "input", content: "input"},
+  },
+  {
+    name: "Delete Message",
+    endpoint: "/api/messages/delete",
+    method: "DELETE",
+    fields: {recipient: "input", time: "input"},
+  },
   //
   // ...
   //
