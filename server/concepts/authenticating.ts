@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+
 import DocCollection, { BaseDoc } from "../framework/doc";
 import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
 
@@ -54,6 +55,14 @@ export default class AuthenticatingConcept {
       throw new NotFoundError(`User not found!`);
     }
     return this.redactPassword(user);
+  }
+
+  async getUnredactedUser(username: string) {
+    const user = await this.users.readOne({ username });
+    if (user === null) {
+      throw new NotFoundError(`User not found!`);
+    }
+    return user;
   }
 
   async idsToUsernames(ids: ObjectId[]) {

@@ -24,7 +24,7 @@ const operations: Operation[] = [
     name: "Create User",
     endpoint: "/api/users",
     method: "POST",
-    fields: { username: "input", password: "input", key: "input"},
+    fields: { username: "input", password: "input", adminKey: "input"},
   },
   {
     name: "Login",
@@ -55,6 +55,66 @@ const operations: Operation[] = [
     endpoint: "/api/users/:username",
     method: "GET",
     fields: { username: "input" },
+  },
+  {
+    name: "Get Friends",
+    endpoint: "/api/follow/friends",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "Get Followers",
+    endpoint: "/api/follow/followers",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "Get Following",
+    endpoint: "/api/follow/following",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "Remove Follower",
+    endpoint: "/api/follow/follower/:follower",
+    method: "DELETE",
+    fields: { follower: "input"},
+  },
+  {
+    name: "Remove Following",
+    endpoint: "/api/follow/following/:following",
+    method: "DELETE",
+    fields: { following: "input"},
+  },
+  {
+    name: "View Follow Requests",
+    endpoint: "/api/follow/requests",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "Send Follow Request",
+    endpoint: "/api/follow/requests/:to",
+    method: "POST",
+    fields: { to: "input"},
+  },
+  {
+    name: "Remove Follow Request",
+    endpoint: "/api/follow/requests/:to",
+    method: "DELETE",
+    fields: { to: "input"},
+  },
+  {
+    name: "Accept Follow Request",
+    endpoint: "/api/follow/accept/:from",
+    method: "PUT",
+    fields: { from: "input"},
+  },
+  {
+    name: "Reject Follow Request",
+    endpoint: "/api/follow/reject/:from",
+    method: "PUT",
+    fields: { from: "input"},
   },
   {
     name: "Get Posts (empty for all)",
@@ -93,22 +153,40 @@ const operations: Operation[] = [
     fields: {username: "input"},
   },
   {
-    name: "Approve Verification",
+    name: "View Your Request",
+    endpoint: "/api/verification/requests/view",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "Approve Verification [ADMIN]",
     endpoint: "/api/verification/approve/:requester",
     method: "POST",
     fields: { requester: "input"},
   },
   {
-    name: "Reject Verification",
+    name: "Reject Verification [ADMIN]",
     endpoint: "/api/verification/reject/:requester",
-    method: "POST",
+    method: "DELETE",
     fields: { requester: "input"},
   },
   {
-    name: "View Verification Request",
+    name: "View Verified Users [ADMIN]",
     endpoint: "/api/verification/view",
     method: "GET",
     fields: {},
+  },
+  {
+    name: "View All Verification Requests [ADMIN]",
+    endpoint: "/api/verification/requests/viewall",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "Remove Verified [ADMIN]",
+    endpoint: "/api/verification/delete",
+    method: "DELETE",
+    fields: { username: "input"},
   },
   {
     name: "View All Messages",
@@ -134,6 +212,31 @@ const operations: Operation[] = [
     method: "DELETE",
     fields: {recipient: "input", time: "input"},
   },
+  {
+    name: "View Comments",
+    endpoint: "/api/discussion",
+    method: "GET",
+    fields: {root: "input"},
+  },
+  {
+    name: "View My Comments",
+    endpoint: "/api/discussion/comments",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "Comment",
+    endpoint: "/api/discussion",
+    method: "POST",
+    fields: {root: "input", content: "input"},
+  },
+  {
+    name: "Delete Comment",
+    endpoint: "/api/discussion/:id",
+    method: "DELETE",
+    fields: { id: "input" },
+  },
+
   //
   // ...
   //

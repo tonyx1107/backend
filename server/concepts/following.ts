@@ -2,12 +2,12 @@ import { ObjectId } from "mongodb";
 import DocCollection, { BaseDoc } from "../framework/doc";
 import { NotAllowedError, NotFoundError } from "./errors";
 
-export interface FriendshipDoc extends BaseDoc {
-  user1: ObjectId;
-  user2: ObjectId;
+export interface FollowerDoc extends BaseDoc {
+  follower: ObjectId;
+  followed: ObjectId;
 }
 
-export interface FriendRequestDoc extends BaseDoc {
+export interface FollowRequestDoc extends BaseDoc {
   from: ObjectId;
   to: ObjectId;
   status: "pending" | "rejected" | "accepted";
@@ -17,15 +17,15 @@ export interface FriendRequestDoc extends BaseDoc {
  * concept: Friending [User]
  */
 export default class FriendingConcept {
-  public readonly friends: DocCollection<FriendshipDoc>;
-  public readonly requests: DocCollection<FriendRequestDoc>;
+  public readonly friends: DocCollection<FollowerDoc>;
+  public readonly requests: DocCollection<FollowRequestDoc>;
 
   /**
    * Make an instance of Friending.
    */
   constructor(collectionName: string) {
-    this.friends = new DocCollection<FriendshipDoc>(collectionName);
-    this.requests = new DocCollection<FriendRequestDoc>(collectionName + "_requests");
+    this.friends = new DocCollection<FollowerDoc>(collectionName);
+    this.requests = new DocCollection<FollowRequestDoc>(collectionName + "_requests");
   }
 
   async getRequests(user: ObjectId) {
@@ -42,7 +42,7 @@ export default class FriendingConcept {
 
   async acceptRequest(from: ObjectId, to: ObjectId) {
     await this.removePendingRequest(from, to);
-    await Promise.all([this.requests.createOne({ from, to, status: "accepted" }), this.addFriend(from, to)]);
+    await Promise.all([this.requests.createOne({ from, to, status: "accepted" }), this.addFollower(from, to)]);
     return { msg: "Accepted request!" };
   }
 
@@ -57,29 +57,34 @@ export default class FriendingConcept {
     return { msg: "Removed request!" };
   }
 
-  async removeFriend(user: ObjectId, friend: ObjectId) {
-    const friendship = await this.friends.popOne({
-      $or: [
-        { user1: user, user2: friend },
-        { user1: friend, user2: user },
-      ],
-    });
-    if (friendship === null) {
-      throw new FriendNotFoundError(user, friend);
+  async removeFollower(user: ObjectId, follower: ObjectId) {
+    const follow = await this.friends.popOne({ follower, followed: user });
+    if (follow === null) {
+      throw new FriendNotFoundError(follower, user);
     }
-    return { msg: "Unfriended!" };
+    return { msg: "Removed from followers!" };
   }
 
-  async getFriends(user: ObjectId) {
-    const friendships = await this.friends.readMany({
-      $or: [{ user1: user }, { user2: user }],
-    });
-    // Making sure to compare ObjectId using toString()
-    return friendships.map((friendship) => (friendship.user1.toString() === user.toString() ? friendship.user2 : friendship.user1));
+  async removeFollowing(user: ObjectId, followed: ObjectId) {
+    const follow = await this.friends.popOne({ follower: user, followed });
+    if (follow === null) {
+      throw new FriendNotFoundError(user, followed);
+    }
+    return { msg: "Stopped following!" };
   }
 
-  private async addFriend(user1: ObjectId, user2: ObjectId) {
-    void this.friends.createOne({ user1, user2 });
+  async getFollowers(user: ObjectId) {
+    const followers = await this.friends.readMany({ followed: user });
+    return followers.map((follower) => follower.follower);
+  }
+
+  async getFollowing(user: ObjectId) {
+    const followings = await this.friends.readMany({ follower: user });
+    return followings.map((following) => following.followed);
+  }
+
+  private async addFollower(user1: ObjectId, user2: ObjectId) {
+    void this.friends.createOne({ follower: user1, followed: user2 });
   }
 
   private async removePendingRequest(from: ObjectId, to: ObjectId) {
@@ -90,24 +95,19 @@ export default class FriendingConcept {
     return request;
   }
 
-  private async assertNotFriends(u1: ObjectId, u2: ObjectId) {
-    const friendship = await this.friends.readOne({
-      $or: [
-        { user1: u1, user2: u2 },
-        { user1: u2, user2: u1 },
-      ],
-    });
+  private async assertNotFollowing(u1: ObjectId, u2: ObjectId) {
+    const friendship = await this.friends.readOne({ follower: u1, following: u2 });
     if (friendship !== null || u1.toString() === u2.toString()) {
       throw new AlreadyFriendsError(u1, u2);
     }
   }
 
   private async canSendRequest(u1: ObjectId, u2: ObjectId) {
-    await this.assertNotFriends(u1, u2);
+    await this.assertNotFollowing(u1, u2);
     // check if there is pending request between these users
     const request = await this.requests.readOne({
-      from: { $in: [u1, u2] },
-      to: { $in: [u1, u2] },
+      from: u1,
+      to: u2,
       status: "pending",
     });
     if (request !== null) {
@@ -121,7 +121,7 @@ export class FriendRequestNotFoundError extends NotFoundError {
     public readonly from: ObjectId,
     public readonly to: ObjectId,
   ) {
-    super("Friend request from {0} to {1} does not exist!", from, to);
+    super("Follow request from {0} to {1} does not exist!", from, to);
   }
 }
 
@@ -130,7 +130,7 @@ export class FriendRequestAlreadyExistsError extends NotAllowedError {
     public readonly from: ObjectId,
     public readonly to: ObjectId,
   ) {
-    super("Friend request between {0} and {1} already exists!", from, to);
+    super("Follow request from {0} to {1} already exists!", from, to);
   }
 }
 
@@ -148,6 +148,6 @@ export class AlreadyFriendsError extends NotAllowedError {
     public readonly user1: ObjectId,
     public readonly user2: ObjectId,
   ) {
-    super("{0} and {1} are already friends!", user1, user2);
+    super("{0} already following {1}!", user1, user2);
   }
 }
