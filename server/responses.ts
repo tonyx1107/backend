@@ -1,5 +1,5 @@
 import { Authing } from "./app";
-import { AlreadyFriendsError, FriendNotFoundError, FriendRequestAlreadyExistsError, FriendRequestDoc, FriendRequestNotFoundError } from "./concepts/following";
+import { AlreadyFriendsError, FriendNotFoundError, FriendRequestAlreadyExistsError, FollowRequestDoc, FriendRequestNotFoundError } from "./concepts/following";
 import { PostAuthorNotMatchError, PostDoc } from "./concepts/posting";
 import { Router } from "./framework/router";
 
@@ -31,7 +31,7 @@ export default class Responses {
    * Convert FriendRequestDoc into more readable format for the frontend
    * by converting the ids into usernames.
    */
-  static async friendRequests(requests: FriendRequestDoc[]) {
+  static async friendRequests(requests: FollowRequestDoc[]) {
     const from = requests.map((request) => request.from);
     const to = requests.map((request) => request.to);
     const usernames = await Authing.idsToUsernames(from.concat(to));
