@@ -57,12 +57,6 @@ const operations: Operation[] = [
     fields: { username: "input" },
   },
   {
-    name: "Get Friends",
-    endpoint: "/api/follow/friends",
-    method: "GET",
-    fields: {},
-  },
-  {
     name: "Get Followers",
     endpoint: "/api/follow/followers",
     method: "GET",
